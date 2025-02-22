@@ -50,5 +50,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_HTTP_ADDR=127.0.0.1
     depends_on:
       - prometheus
+    network_mode: host  

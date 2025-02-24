@@ -16,13 +16,15 @@ curl -o ~/.avalanchego/monitoring/compose.yml "https://raw.githubusercontent.com
 cd ~/.avalanchego/monitoring && docker compose up -d
 ```
 
-### Access Dashboards
+### Access Services
 
-After setup, access Grafana at:
+The monitoring stack exposes these local endpoints:
 
-- URL: http://localhost:3000
-- Username: admin
-- Password: admin
+- Grafana: http://localhost:3000 (Username: admin, Password: admin)
+- Prometheus: http://localhost:9090
+- Node Exporter: http://localhost:9100/metrics
+
+The node data is expected to be at http://localhost:9650/ext/metrics
 
 ### Security Note
 

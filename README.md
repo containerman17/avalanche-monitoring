@@ -10,7 +10,7 @@ Avalanche node. It assumes your node is exposing metrics on localhost:9650.
 mkdir -p ~/.avalanchego/monitoring
 
 # Download compose file
-curl -o ~/.avalanchego/monitoring/docker-compose.yml https://raw.githubusercontent.com/containerman17/avalanche-monitoring/main/docker-compose.yml
+curl -o ~/.avalanchego/monitoring/compose.yml "https://raw.githubusercontent.com/containerman17/avalanche-monitoring/main/docker-compose.yml"
 
 # Start monitoring
 cd ~/.avalanchego/monitoring && docker compose up -d

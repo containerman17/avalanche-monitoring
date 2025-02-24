@@ -1,8 +1,7 @@
-version: '3.8'
-
 volumes:
   prometheus_data: {}
   grafana_data: {}
+  dashboards: {}
 
 configs:
   prometheus_config:
@@ -57,6 +56,28 @@ configs:
             foldersFromFilesStructure: true
 
 services:
+  dashboards_downloader:
+    image: alpine:latest
+    container_name: dashboards_downloader
+    restart: on-failure
+    volumes:
+      - dashboards:/dashboards
+    command:
+      - 'sh'
+      - '-c'
+      - |
+        apk add --no-cache wget unzip
+        cd /tmp
+        if [ -z "$(ls -A /dashboards)" ]; then
+          echo "Downloading dashboards..."
+          wget -q https://github.com/ava-labs/avalanche-monitoring/archive/refs/heads/main.zip
+          unzip -q main.zip
+          cp avalanche-monitoring-main/grafana/dashboards/*.json /dashboards/
+          echo "Dashboards downloaded and extracted"
+        else
+          echo "Dashboards already exist, skipping download"
+        fi
+
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
@@ -99,7 +120,7 @@ services:
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/dashboards:/etc/grafana/dashboards
+      - dashboards:/etc/grafana/dashboards:ro
     configs:
       - source: grafana_datasources
         target: /etc/grafana/provisioning/datasources/prometheus.yml
@@ -110,5 +131,6 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_HTTP_ADDR=127.0.0.1
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_started
     network_mode: host  

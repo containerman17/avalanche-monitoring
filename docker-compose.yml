@@ -4,6 +4,58 @@ volumes:
   prometheus_data: {}
   grafana_data: {}
 
+configs:
+  prometheus_config:
+    content: |
+      global:
+        scrape_interval: 15s
+        evaluation_interval: 15s
+      
+      scrape_configs:
+        - job_name: "prometheus"
+          static_configs:
+            - targets: ["localhost:9090"]
+        - job_name: "avalanchego-machine"
+          static_configs:
+            - targets: ["localhost:9100"]
+              labels:
+                alias: "machine"
+        - job_name: "avalanchego"
+          metrics_path: "/ext/metrics"
+          static_configs:
+            - targets: ["localhost:9650"]
+
+  grafana_datasources:
+    content: |
+      apiVersion: 1
+      
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          orgId: 1
+          url: http://localhost:9090
+          isDefault: true
+          version: 1
+          editable: false
+
+  grafana_dashboards_provider:
+    content: |
+      apiVersion: 1
+      
+      providers:
+        - name: "Avalanche"
+          orgId: 1
+          folder: ""
+          folderUid: ""
+          type: file
+          disableDeletion: false
+          updateIntervalSeconds: 30
+          allowUiUpdates: true
+          options:
+            path: /etc/grafana/dashboards
+            foldersFromFilesStructure: true
+
 services:
   node-exporter:
     image: prom/node-exporter:latest
@@ -28,8 +80,10 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -45,8 +99,12 @@ services:
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/etc/grafana/dashboards
+    configs:
+      - source: grafana_datasources
+        target: /etc/grafana/provisioning/datasources/prometheus.yml
+      - source: grafana_dashboards_provider
+        target: /etc/grafana/provisioning/dashboards/avalanche.yml
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
